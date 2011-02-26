@@ -11,24 +11,14 @@
 #include "uart.h"
 
 
-#define SCROLLRATE      0
-#define READY_FOR_INPUT		'R'
-#define ACCEPTED_DELIMITER 	'K'
-#define END_OF_FILE		'E'
-#define START_BYTE		0x73 // 's'
 #define put(x)	uart_transmit_byte_block(x)
 
-#define L_OF 2
-#define B_END QM_BUFFER_SIZE
-
 unsigned char bigbuffer[QM_BUFFER_SIZE];
-//unsigned char bigbuffer[QM_X_PIXELS][QM_Y_PIXELS];
-//unsigned char bigbuffer2[QM_BUFFER_SIZE];
 
+void wait_for_start(void);
 
 int main (void)
 {
-	uint8_t scroll = 0;
 
 	_delay_ms(300);
 	PORTA = 0x00;
@@ -41,6 +31,8 @@ int main (void)
 	unsigned char rxbuff[30];
 	unsigned char txbuff[30];
 
+	unsigned char lcam_buff[102];
+
 	init_matrix();
 
 	uart_init(0, rxbuff, 0, 0, txbuff);
@@ -49,51 +41,77 @@ int main (void)
 
 	while(1)
 	{
-		put(READY_FOR_INPUT);
+		//put(READY_FOR_INPUT);
 
 		// listen for input on uart
-		unsigned char rxchar = 0;
 		unsigned char nops;
 		nops = 0;
-		while (rxchar != START_BYTE)
-		{
-			rxchar = uart_receive_byte_block();
 
-			nops++;
-			// so I don't have to keep pressing reset :)
-			if (nops%128==0)
-				put(READY_FOR_INPUT); 
-		}
+		// start delimiter is 'START'
+		wait_for_start();
 
-		put(ACCEPTED_DELIMITER);
 
-		// read array size from next char (low, high)
-		unsigned char size_l = uart_receive_byte_block();
-		//unsigned char size_h = uart_receive_byte_block(); //unimplemented
-		
-		// verify size
-		//uart_send_dec((int)size_l);
-		
+		// receive 102 pixels
 		int i = 0;
-		for (i = 0; i < size_l; i++)
+		for(i=0; i<102; i++)
 		{
-			bigbuffer[i] = uart_receive_byte_block();
+			lcam_buff[i] = uart_receive_byte_block();
 		}
 
-		write_array_to_board(bigbuffer,scroll,QM_BUFFER_SIZE-1);
-
-
-		if (scroll > QM_BUFFER_SIZE || scroll == 0) 	
-		{	
-			scroll = 0;			// start again at the end of the array
-			//_delay_ms(5000);	// and pause to show the first panel
-		}
 		
-		scroll += SCROLLRATE;	// 1 vertical line = 2 bytes
+		// convert 96 of 102 pixels into bargraphs
+		for (i = 0; i < 96; i++)
+		{
+			uint8_t val = 0;
+			// conversion from lcam_buff[i+3]
+			val = lcam_buff[i+3] >> 4;
 
+			uint16_t bar = 1;
+			while(val > 0)
+			{
+				bar <<= 1;
+				bar += 1;
+				val--;
+			}
 
+			bigbuffer[i*2] = (uint8_t)(bar>>8);
+			bigbuffer[i*2+1] = (uint8_t)(bar&0xFF);
+		}
+
+		write_array_to_board(bigbuffer,0,QM_BUFFER_SIZE-1);
 	}
 }
 
 
+void wait_for_start(void)
+{
+	unsigned char key[] = "START";
+	uint8_t pos = 0;
+	unsigned char rxchar = 0;
+
+	while(pos<5)
+	{
+		// wait for first character
+		while(rxchar != key[pos])
+		{
+			rxchar = uart_receive_byte_block();
+		}
+		pos++;
+		
+		// check that all following characters are correct
+		while(pos<5)
+		{
+			rxchar = uart_receive_byte_block();
+			if(rxchar == key[pos])
+			{
+				pos++;
+			}
+			else
+			{
+				pos=0;
+				break;
+			}
+		}
+	}
+}
 
