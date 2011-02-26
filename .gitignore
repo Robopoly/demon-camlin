@@ -1,0 +1,9 @@
+*.hex
+*.ee.hex
+*.lst
+*.o
+*.out*
+*.swp
+*.swo
+*.pyc
+*.html
