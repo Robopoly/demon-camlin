@@ -99,10 +99,9 @@ void wait_for_start(void)
 		while(rxchar != key[pos])
 		{
 			rxchar = uart_receive_byte_block();
-			PORTC |= 0x04;
-			put(rxchar);
+			//PORTC |= 0x04;
+			//put(rxchar);
 		}
-		put('S');
 		pos++;
 		
 		// check that all following characters are correct
@@ -111,7 +110,7 @@ void wait_for_start(void)
 			rxchar = uart_receive_byte_block();
 			if(rxchar == key[pos])
 			{
-				put(key[pos]);
+				//put(key[pos]);
 				pos++;
 			}
 			else

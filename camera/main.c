@@ -50,6 +50,7 @@ int main (void)
 		for(i=0;i<102;i++)
 		{
 			uartSendByte(buffer[i]>>4);
+			//waitus(100);
 		}
 	
 
