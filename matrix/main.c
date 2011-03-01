@@ -26,7 +26,8 @@ int main (void)
 	PORTB = 0;
 	DDRB = 0xFF;
 
-	DDRD = 0xFF;
+	//DDRD = 0xFF;
+	DDRC |= 0x04;
 	
 	unsigned char rxbuff[30];
 	unsigned char txbuff[30];
@@ -35,13 +36,15 @@ int main (void)
 
 	init_matrix();
 
-	uart_init(0, rxbuff, 0, 0, txbuff);
+	uart_init(0, 0, 0, 0, 0);
 	_delay_ms(300);
 
 
 	while(1)
 	{
-		//put(READY_FOR_INPUT);
+		put('F');
+		uart_receive_byte_block();
+		PORTC |= 0x04;
 
 		// listen for input on uart
 		unsigned char nops;
@@ -89,13 +92,17 @@ void wait_for_start(void)
 	uint8_t pos = 0;
 	unsigned char rxchar = 0;
 
+	put('0');
 	while(pos<5)
 	{
 		// wait for first character
 		while(rxchar != key[pos])
 		{
 			rxchar = uart_receive_byte_block();
+			PORTC |= 0x04;
+			put(rxchar);
 		}
+		put('S');
 		pos++;
 		
 		// check that all following characters are correct
@@ -104,6 +111,7 @@ void wait_for_start(void)
 			rxchar = uart_receive_byte_block();
 			if(rxchar == key[pos])
 			{
+				put(key[pos]);
 				pos++;
 			}
 			else

@@ -16,7 +16,7 @@ callback_tx tx_cb;
 
 #define UART_BAUD_SELECT(baudRate, xtalCpu) ((xtalCpu)/((baudRate)*16l)-1)
 #define B57600 UART_BAUD_SELECT(57600, 8000000)*2
-//#define USE_2X 1
+#define USE_2X 1
 
 /*Init uart module with baudrate set in config.h
 cb_rx must be null to disable rx_interrupt
