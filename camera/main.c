@@ -6,8 +6,8 @@
  * 	Test program to convert 0-255 to 16bit bargraph
  */
 
-#define INTEGRATION 200 // microseconds
-#define DELAY 250	// milliseconds
+#define INTEGRATION 220 // microseconds
+#define DELAY 500	// milliseconds
 
 uint16_t char_to_bargraph(unsigned char c);
 
@@ -49,9 +49,11 @@ int main (void)
 		unsigned char i = 0;
 		for(i=0;i<102;i++)
 		{
-			uartSendByte(buffer[i]>>4);
+			uartSendByte((buffer[i]>>3)+'0');
 			//waitus(100);
 		}
+
+		uartSendByte('\0');
 	
 
 		led_val ^= 1;
